@@ -9,26 +9,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // The first part of the session cookie is the OrgID,
     // which we use as key to support being logged in to multiple orgs at once.
     // http://salesforce.stackexchange.com/questions/23277/different-session-ids-in-different-contexts
+    // There is no straight forward way to unambiguously understand if the user authenticated against salesforce.com or cloudforce.com
+    // (and thereby the domain of the relevant cookie) cookie domains are therefore tried in sequence.
     chrome.cookies.get({url: request.url, name: "sid", storeId: sender.tab.cookieStoreId}, cookie => {
       if (!cookie) {
         sendResponse(null);
         return;
       }
       let [orgId] = cookie.value.split("!");
-      chrome.cookies.getAll({name: "sid", domain: "salesforce.com", secure: true, storeId: sender.tab.cookieStoreId}, sfCookies => {
-        let sfSessionCookie = sfCookies.find(c => c.value.startsWith(orgId + "!"));
-        if (!sfSessionCookie) {
-          chrome.cookies.getAll({name: "sid", domain: "cloudforce.com", secure: true, storeId: sender.tab.cookieStoreId}, cfCookies => {
-            let cfSessionCookie = cfCookies.find(c => c.value.startsWith(orgId + "!"));
-            if (!cfSessionCookie) {
+      chrome.cookies.getAll({name: "sid", domain: "salesforce.com", secure: true, storeId: sender.tab.cookieStoreId}, cookies => {
+        let sessionCookie = cookies.find(c => c.value.startsWith(orgId + "!"));
+        if (sessionCookie) {
+          sendResponse(sessionCookie.domain);
+        } else {
+          chrome.cookies.getAll({name: "sid", domain: "cloudforce.com", secure: true, storeId: sender.tab.cookieStoreId}, cookies => {
+            sessionCookie = cookies.find(c => c.value.startsWith(orgId + "!"));
+            if (sessionCookie) {
+              sendResponse(sessionCookie.domain);
+            } else {
               sendResponse(null);
-              return;
             }
-            sendResponse(cfSessionCookie.domain);
           });
-          return;
         }
-        sendResponse(sfSessionCookie.domain);
       });
     });
     return true; // Tell Chrome that we want to call sendResponse asynchronously.
