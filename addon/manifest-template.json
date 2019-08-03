@@ -1,14 +1,14 @@
 {
   "name": "Salesforce inspector",
   "description": "Productivity tools for Salesforce administrators and developers to inspect data and metadata directly from the Salesforce UI.",
-  "version": "1.5",
+  "version": "1.6",
   "icons": {
     "128": "icon128.png"
   },
   "applications": {
     "gecko": {
       "id": "jid1-DBcuAQpfLMcvOQ@jetpack",
-      "strict_min_version": "52.0"
+      "strict_min_version": "59.0"
     }
   },
   "minimum_chrome_version": "55",
@@ -53,6 +53,6 @@
     "open-object-setup.html",
     "limits.html"
   ],
-  "incognito": "split",
+  "incognito": "replaced-at-build",
   "manifest_version": 2
 }
